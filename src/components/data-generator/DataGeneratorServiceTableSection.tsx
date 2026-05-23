@@ -1,0 +1,458 @@
+import React from "react";
+import {
+  ArrowDownTrayIcon,
+  ChevronDownIcon
+} from "@heroicons/react/24/outline";
+import { Button } from "@/components/ui/Button";
+import { DataGeneratorServiceDetailModal } from "@/components/data-generator/DataGeneratorServiceDetailModal";
+import { EmptyStatePanel } from "@/components/ui/EmptyStatePanel";
+import { ExpandableCard } from "@/components/ui/ExpandableCard";
+import { HoverInfoTooltip } from "@/components/ui/HoverInfoTooltip";
+import { downloadTableAsExcel } from "@/utils/downloadAsExcel";
+
+type ServiceCellDetail = {
+  asal?: string;
+  tujuan?: string;
+  total?: string;
+};
+
+type ServiceResponse = {
+  data?: {
+    asal_ke_tujuan?: Record<
+      string,
+      { total?: string; per_negara?: ServiceCellDetail[] | string }
+    >;
+    asal_ke_dunia?: Record<
+      string,
+      { total?: string; per_negara?: ServiceCellDetail[] | string }
+    >;
+    dunia_ke_tujuan?: Record<
+      string,
+      { total?: string; per_negara?: ServiceCellDetail[] | string }
+    >;
+  };
+  meta?: {
+    years?: number[];
+    sourceName?: string;
+    origins?: string[];
+    destinations?: string[];
+    originGroups?: string[];
+    destinationGroups?: string[];
+    gender?: string;
+    profesi?: string[];
+  };
+};
+
+type Props = {
+  data: ServiceResponse | null;
+  loading: boolean;
+  originTooltipItems?: string[];
+  destinationTooltipItems?: string[];
+};
+
+function SubtitleTooltipTrigger({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      className="inline cursor-help appearance-none border-0 bg-transparent p-0 text-inherit"
+    >
+      <span className="underline decoration-dotted underline-offset-3">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function toEntryArray(value: unknown): ServiceCellDetail[] {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") return [value as ServiceCellDetail];
+  return [];
+}
+
+function asNumber(value: unknown) {
+  const normalized = String(value ?? "")
+    .replace(/\./g, "")
+    .replace(/,/g, ".")
+    .replace(/[^\d.-]/g, "");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatNumber(value: unknown) {
+  const numeric = asNumber(value);
+  if (numeric === 0) return "N/A";
+  return numeric.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+}
+
+function formatCompact(items: string[] = []) {
+  if (items.length === 0) return "-";
+  if (items.length <= 2) return items.join(", ");
+  return `${items[0]}, +${items.length - 1} negara`;
+}
+
+function resolveParty(items: string[] = [], groups: string[] = []) {
+  return groups.length > 0 ? groups : items;
+}
+
+function tooltipContent(title: string, items: string[] = []) {
+  if (items.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <div className="border-b border-slate-200 pb-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          {title}
+        </p>
+      </div>
+      <div className="max-h-44 space-y-1 overflow-y-auto pr-1 text-xs text-slate-600">
+        {items.map((item) => (
+          <div key={item}>{item}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function genderLabel(value: string | undefined) {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized === "l") return "Laki-laki";
+  if (normalized === "p") return "Perempuan";
+  return "Semua";
+}
+
+export function DataGeneratorServiceTableSection({
+  data,
+  loading,
+  originTooltipItems,
+  destinationTooltipItems
+}: Props) {
+  const [detailState, setDetailState] = React.useState<{
+    open: boolean;
+    segment: "asal_ke_tujuan" | "asal_ke_dunia" | "dunia_ke_tujuan" | null;
+    year: number | null;
+  }>({
+    open: false,
+    segment: null,
+    year: null
+  });
+
+  const meta = data?.meta ?? {};
+  const years = React.useMemo(
+    () =>
+      [...(meta.years ?? [])]
+        .map(Number)
+        .filter(Number.isFinite)
+        .sort((a, b) => a - b),
+    [meta.years]
+  );
+  const rows = React.useMemo(
+    () =>
+      years.map((year) => ({
+        year,
+        asalKeTujuan: asNumber(
+          data?.data?.asal_ke_tujuan?.[String(year)]?.total
+        ),
+        asalKeDunia: asNumber(data?.data?.asal_ke_dunia?.[String(year)]?.total),
+        duniaKeTujuan: asNumber(
+          data?.data?.dunia_ke_tujuan?.[String(year)]?.total
+        )
+      })),
+    [
+      data?.data?.asal_ke_dunia,
+      data?.data?.asal_ke_tujuan,
+      data?.data?.dunia_ke_tujuan,
+      years
+    ]
+  );
+  const source = meta.sourceName ?? "-";
+  const genderText = genderLabel(meta.gender);
+  const professionValues = meta.profesi ?? ["Semua Profesi"];
+  const professionText =
+    professionValues.length <= 2
+      ? professionValues.join(", ")
+      : `${professionValues[0]}, +${professionValues.length - 1} profesi`;
+  const originValues = React.useMemo(
+    () => resolveParty(meta.origins ?? [], meta.originGroups ?? []),
+    [meta.originGroups, meta.origins]
+  );
+  const destinationValues = React.useMemo(
+    () => resolveParty(meta.destinations ?? [], meta.destinationGroups ?? []),
+    [meta.destinationGroups, meta.destinations]
+  );
+  const originCompactLabel = React.useMemo(
+    () => formatCompact(originValues),
+    [originValues]
+  );
+  const destinationCompactLabel = React.useMemo(
+    () => formatCompact(destinationValues),
+    [destinationValues]
+  );
+  const originFullLabel = React.useMemo(
+    () => (originValues.length ? originValues.join(", ") : "-"),
+    [originValues]
+  );
+  const destinationFullLabel = React.useMemo(
+    () => (destinationValues.length ? destinationValues.join(", ") : "-"),
+    [destinationValues]
+  );
+  const exportSubtitle = `Tahun ${years[0] ?? "-"}-${years[years.length - 1] ?? "-"} | Gender: ${genderText} | Profesi: ${professionValues.join(", ")} | Asal: ${originFullLabel} | Tujuan: ${destinationFullLabel} | Sumber: ${source}`;
+  const resolvedOriginTooltipItems = React.useMemo(
+    () =>
+      originTooltipItems && originTooltipItems.length > 0
+        ? originTooltipItems
+        : originValues,
+    [originTooltipItems, originValues]
+  );
+  const resolvedDestinationTooltipItems = React.useMemo(
+    () =>
+      destinationTooltipItems && destinationTooltipItems.length > 0
+        ? destinationTooltipItems
+        : destinationValues,
+    [destinationTooltipItems, destinationValues]
+  );
+  const originTooltipContent = React.useMemo(
+    () => tooltipContent("Asal", resolvedOriginTooltipItems),
+    [resolvedOriginTooltipItems]
+  );
+  const destinationTooltipContent = React.useMemo(
+    () => tooltipContent("Tujuan", resolvedDestinationTooltipItems),
+    [resolvedDestinationTooltipItems]
+  );
+  const subtitle = React.useMemo(
+    () => (
+      <>
+        <span>{`Tahun ${years[0] ?? "-"}-${years[years.length - 1] ?? "-"}`}</span>
+        <span> | Asal: </span>
+        {originTooltipContent ? (
+          <HoverInfoTooltip content={originTooltipContent} openOnClick>
+            <SubtitleTooltipTrigger label={originCompactLabel} />
+          </HoverInfoTooltip>
+        ) : (
+          <span>{originCompactLabel}</span>
+        )}
+        <span> | Tujuan: </span>
+        {destinationTooltipContent ? (
+          <HoverInfoTooltip content={destinationTooltipContent} openOnClick>
+            <SubtitleTooltipTrigger label={destinationCompactLabel} />
+          </HoverInfoTooltip>
+        ) : (
+          <span>{destinationCompactLabel}</span>
+        )}
+        <span>{` | Gender: ${genderText}`}</span>
+        <span>{` | Profesi: ${professionText}`}</span>
+        <span>{` | Sumber: ${source}`}</span>
+      </>
+    ),
+    [
+      destinationCompactLabel,
+      destinationTooltipContent,
+      genderText,
+      originCompactLabel,
+      originTooltipContent,
+      professionText,
+      source,
+      years
+    ]
+  );
+
+  const detailRows = React.useMemo(() => {
+    if (!detailState.segment || detailState.year == null) return [];
+    if (detailState.segment === "asal_ke_tujuan")
+      return toEntryArray(
+        data?.data?.asal_ke_tujuan?.[String(detailState.year)]?.per_negara
+      );
+    if (detailState.segment === "asal_ke_dunia")
+      return toEntryArray(
+        data?.data?.asal_ke_dunia?.[String(detailState.year)]?.per_negara
+      );
+    return toEntryArray(
+      data?.data?.dunia_ke_tujuan?.[String(detailState.year)]?.per_negara
+    );
+  }, [
+    data?.data?.asal_ke_dunia,
+    data?.data?.asal_ke_tujuan,
+    data?.data?.dunia_ke_tujuan,
+    detailState.segment,
+    detailState.year
+  ]);
+
+  const detailTitle = React.useMemo(() => {
+    if (!detailState.segment || detailState.year == null) return "";
+    if (detailState.segment === "asal_ke_tujuan")
+      return `Jasa ${formatCompact(originValues)} ke ${formatCompact(destinationValues)}`;
+    if (detailState.segment === "asal_ke_dunia")
+      return `Jasa ${formatCompact(originValues)} ke Dunia`;
+    return `Jasa Dunia ke ${formatCompact(destinationValues)}`;
+  }, [destinationValues, detailState.segment, detailState.year, originValues]);
+
+  const detailSubtitle = React.useMemo(() => {
+    if (detailState.year == null) return undefined;
+    return `Tahun ${detailState.year} | Gender: ${genderText} | Profesi: ${professionText}`;
+  }, [detailState.year, genderText, professionText]);
+
+  const handleDownload = React.useCallback(() => {
+    void downloadTableAsExcel({
+      filename: "data_generator_jasa_table",
+      title: "Data Jasa",
+      subtitle: exportSubtitle,
+      source: `Sumber: ${source}`,
+      columns: [
+        { key: "tahun", label: "Tahun" },
+        {
+          key: "asal_ke_tujuan",
+          label: `Jasa ${formatCompact(originValues)} ke ${formatCompact(destinationValues)}`
+        },
+        {
+          key: "asal_ke_dunia",
+          label: `Jasa ${formatCompact(originValues)} ke Dunia`
+        },
+        {
+          key: "dunia_ke_tujuan",
+          label: `Jasa Dunia ke ${formatCompact(destinationValues)}`
+        }
+      ],
+      rows: rows.map((row) => ({
+        tahun: String(row.year),
+        asal_ke_tujuan: formatNumber(row.asalKeTujuan),
+        asal_ke_dunia: formatNumber(row.asalKeDunia),
+        dunia_ke_tujuan: formatNumber(row.duniaKeTujuan)
+      }))
+    });
+  }, [destinationValues, exportSubtitle, originValues, rows, source]);
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="h-5 w-56 animate-pulse rounded bg-slate-200" />
+        <div className="mt-3 h-4 w-80 animate-pulse rounded bg-slate-100" />
+        <div className="mt-5 h-72 animate-pulse rounded-2xl bg-slate-100" />
+      </div>
+    );
+  }
+
+  if (!data || rows.length === 0) {
+    return (
+      <EmptyStatePanel
+        title="Data jasa belum tersedia"
+        description="Atur filter jasa lalu pilih Tampilan Tabel untuk memuat hasil generator."
+      />
+    );
+  }
+
+  const content = (
+    <div className="space-y-3">
+      <div className="overflow-hidden border border-slate-300 bg-white shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-separate border-spacing-0 text-sm text-slate-700">
+            <thead className="bg-[#1d4ed8] text-white">
+              <tr>
+                <th className="border-b border-r border-blue-400 px-4 py-3 text-center font-semibold">
+                  Tahun
+                </th>
+                <th className="border-b border-r border-blue-400 px-4 py-3 text-center font-semibold">{`Jasa ${formatCompact(originValues)} ke ${formatCompact(destinationValues)}`}</th>
+                <th className="border-b border-r border-blue-400 px-4 py-3 text-center font-semibold">{`Jasa ${formatCompact(originValues)} ke Dunia`}</th>
+                <th className="border-b border-blue-400 px-4 py-3 text-center font-semibold">{`Jasa Dunia ke ${formatCompact(destinationValues)}`}</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              {rows.map((row, index) => (
+                <tr
+                  key={`service-row-${row.year}`}
+                  className={index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}
+                >
+                  <td className="border-b border-r border-slate-200 px-4 py-3 text-center font-medium text-slate-800">
+                    {row.year}
+                  </td>
+                  <td className="border-b border-r border-slate-200 px-4 py-3 text-right tabular-nums">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-end gap-1 font-medium text-[#1d4ed8] transition hover:underline"
+                      onClick={() =>
+                        setDetailState({
+                          open: true,
+                          segment: "asal_ke_tujuan",
+                          year: row.year
+                        })
+                      }
+                    >
+                      <ChevronDownIcon className="h-4 w-4" />
+                      {formatNumber(row.asalKeTujuan)}
+                    </button>
+                  </td>
+                  <td className="border-b border-r border-slate-200 px-4 py-3 text-right tabular-nums">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-end gap-1 font-medium text-[#1d4ed8] transition hover:underline"
+                      onClick={() =>
+                        setDetailState({
+                          open: true,
+                          segment: "asal_ke_dunia",
+                          year: row.year
+                        })
+                      }
+                    >
+                      <ChevronDownIcon className="h-4 w-4" />
+                      {formatNumber(row.asalKeDunia)}
+                    </button>
+                  </td>
+                  <td className="border-b border-slate-200 px-4 py-3 text-right tabular-nums">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-end gap-1 font-medium text-[#1d4ed8] transition hover:underline"
+                      onClick={() =>
+                        setDetailState({
+                          open: true,
+                          segment: "dunia_ke_tujuan",
+                          year: row.year
+                        })
+                      }
+                    >
+                      <ChevronDownIcon className="h-4 w-4" />
+                      {formatNumber(row.duniaKeTujuan)}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <ExpandableCard
+      title="Data Jasa"
+      subtitle={subtitle}
+      className="shadow-sm"
+      modalSize="full"
+      actions={
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-md border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50"
+          onClick={handleDownload}
+        >
+          <ArrowDownTrayIcon className="h-4 w-4" />
+        </Button>
+      }
+      expandedContent={content}
+    >
+      <>
+        {content}
+        <DataGeneratorServiceDetailModal
+          open={detailState.open}
+          onClose={() =>
+            setDetailState({ open: false, segment: null, year: null })
+          }
+          title={detailTitle}
+          subtitle={detailSubtitle}
+          rows={detailRows}
+          showOrigin={detailState.segment !== "dunia_ke_tujuan"}
+          showDestination={detailState.segment !== "asal_ke_dunia"}
+          source={`Sumber: ${source}`}
+          exportFilename={`data_generator_service_detail_${detailState.segment ?? "detail"}`}
+        />
+      </>
+    </ExpandableCard>
+  );
+}

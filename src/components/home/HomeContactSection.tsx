@@ -85,7 +85,7 @@ export function HomeContactSection() {
       >
         <div className="mb-16 text-center">
           <h2 className="text-3xl font-extrabold tracking-wide text-[#162360] sm:text-4xl lg:text-5xl">
-            Hubungi Tim SIDE
+            Hubungi Tim Platform
           </h2>
           <div className="mx-auto mt-4 w-16 rounded-full border-t-4 border-[#FFB900] sm:w-20" />
           <p className="mx-auto mt-4 max-w-3xl text-lg font-medium text-[#5E7ADD]">
@@ -112,9 +112,9 @@ export function HomeContactSection() {
                 <li>Saran fitur baru yang mendukung kebutuhan Anda</li>
               </ul>
               <p className="text-xs text-slate-500">
-                Email resmi:{" "}
+                Email demo:{" "}
                 <span className="font-semibold text-[#162360]">
-                  data1.pskikad@kemlu.go.id
+                  portfolio@example.com
                 </span>
               </p>
             </div>
@@ -159,7 +159,7 @@ export function HomeContactSection() {
                   type="email"
                   value={form.email}
                   onChange={handleChange("email")}
-                  placeholder="nama@instansi.go.id"
+                  placeholder="nama@perusahaan.com"
                   className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-[#5E7ADD] focus:outline-none focus:ring-2 focus:ring-[#5E7ADD]/40"
                 />
                 {errors.email && (

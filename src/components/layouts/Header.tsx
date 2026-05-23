@@ -22,7 +22,6 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/outline";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import logoImg from "@/assets/images/logo-kemlu.png";
 import navLinks, { type NavLinkItem } from "@/constants/navLinks";
 import { PERMISSIONS } from "@/constants/permissions";
 import { APP_ROUTES } from "@/constants/routes";
@@ -253,7 +252,9 @@ export function Header() {
           className="flex min-w-0 items-center gap-2"
           aria-label="Beranda"
         >
-          <img src={logoImg} alt="Logo Kemlu" className="h-8 w-auto" />
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/15 text-[11px] font-bold tracking-[0.2em] text-white ring-1 ring-white/20">
+            PF
+          </span>
           <span className="truncate text-base font-semibold sm:text-lg">
             SIDE
           </span>
@@ -550,7 +551,9 @@ export function Header() {
           <div className="border-b border-slate-200 px-4 pb-3 pt-2">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex min-w-0 items-center gap-2">
-                <img src={logoImg} alt="Logo Kemlu" className="h-7 w-auto" />
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#384AA0] text-[10px] font-bold tracking-[0.2em] text-white">
+                  PF
+                </span>
                 <span className="truncate text-base font-semibold text-[#162360]">
                   Menu
                 </span>

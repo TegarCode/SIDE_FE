@@ -80,7 +80,7 @@ export function AnalisisIdePage() {
         <div data-analisis-ide-tour="page-title">
           <PageTitle
             title="IDE (Indeks Diplomasi Ekonomi)"
-            description="Berdasarkan kajian Kementerian Luar Negeri bersama Universitas Padjadjaran, IDE disusun dari sub modul Perdagangan, Investasi, Pariwisata, dan Tenaga Kerja untuk memetakan prioritas diplomasi ekonomi serta melihat tren dan perbandingan lintas negara."
+            description="IDE disusun dari sub modul Perdagangan, Investasi, Pariwisata, dan Tenaga Kerja untuk memetakan prioritas strategi ekonomi serta melihat tren dan perbandingan lintas negara."
             actions={
               <div data-analisis-ide-tour="download-button">
                 <Button

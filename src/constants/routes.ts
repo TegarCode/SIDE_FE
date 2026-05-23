@@ -83,7 +83,7 @@ export const APP_ROUTES = {
 } as const;
 
 export const EXTERNAL_ROUTES = {
-  INVESTOLINK: "https://investolink.kemlu.go.id",
+  INVESTOLINK: "https://investolink-demo.example",
   KSPI: "https://kspi.bskln.id"
 } as const;
 

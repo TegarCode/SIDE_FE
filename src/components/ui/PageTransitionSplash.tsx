@@ -31,7 +31,7 @@ function SplashContent() {
           >
             <motion.img
               src={logoBskln}
-              alt="Maskot SIDE Kemlu"
+              alt="Maskot Trade Analytics Demo"
               className="h-auto w-20 md:w-24"
               animate={{ y: [0, -1, 0, -0.5, 0] }}
               transition={{
@@ -136,7 +136,7 @@ export function PageTransitionSplash({
         >
           <SplashContent />
           <div className="absolute bottom-6 text-[10px] text-slate-400 md:text-xs">
-            Kementerian Luar Negeri Republik Indonesia
+            Trade Analytics Portfolio
           </div>
         </motion.div>
       ) : null}

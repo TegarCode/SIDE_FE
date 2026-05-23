@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { APP_NAME } from "@/constants/app";
-import { AUTH_LOGIN_BG_URL, AUTH_LOGO_URL } from "@/constants/auth";
+import { AUTH_LOGIN_BG_URL } from "@/constants/auth";
 import { APP_ROUTES } from "@/constants/routes";
 import { CaptchaField } from "@/components/auth/CaptchaField";
 import { Button } from "@/components/ui/Button";
@@ -176,18 +176,11 @@ export function LoginPage() {
         transition={{ duration: 0.4 }}
       >
         <div className="mb-6 text-center">
-          <div className="mx-auto grid h-14 w-14 place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] ring-2 ring-white/20">
-            <img
-              src={AUTH_LOGO_URL}
-              alt="Kementerian Luar Negeri Republik Indonesia"
-              className="h-12 w-12 object-contain"
-              loading="lazy"
-              decoding="async"
-              referrerPolicy="no-referrer"
-            />
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-sm font-bold tracking-[0.28em] text-[#384AA0] shadow-[0_8px_24px_rgba(0,0,0,0.25)] ring-2 ring-white/20">
+            PF
           </div>
           <h1 className="mt-3 text-2xl font-bold text-white drop-shadow-sm">
-            Masuk ke Sistem Informasi Diplomasi Ekonomi
+            Masuk ke Dashboard Trade Analytics
           </h1>
           <p className="mt-1 text-sm text-white/85">
             Gunakan akun Anda untuk melanjutkan.
@@ -210,7 +203,7 @@ export function LoginPage() {
                 label="Email"
                 type="email"
                 autoComplete="email"
-                placeholder="nama@domain.go.id"
+                placeholder="nama@perusahaan.com"
                 value={form.email}
                 onChange={(event) =>
                   handleFieldChange("email", event.target.value)
